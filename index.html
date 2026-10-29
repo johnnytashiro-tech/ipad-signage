@@ -229,8 +229,14 @@
   body.f-round .fchip, body.f-round .chip { border-radius: 999px; }
   body.f-round .day { border-radius: 22px; }
   body.f-cyber { --r: 14px; }
-  body.f-cyber #time { font-size: 176px; font-weight: 600; letter-spacing: 0.01em; line-height: 0.9; }
-  body.f-cyber #nTime { font-size: 206px; font-weight: 600; letter-spacing: 0.01em; }
+  /* Orbitron は字幅が広いので、日付の列を少し細くして時計の数字に幅を回す */
+  body.f-cyber #clock { padding-left: 32px; padding-right: 32px; }
+  body.f-cyber #time { font-size: 200px; font-weight: 600; letter-spacing: -0.03em; line-height: 0.86; }
+  body.f-cyber #dateMain { font-size: 38px; }
+  body.f-cyber #dateSub { font-size: 24px; }
+  body.f-cyber .yp { flex-direction: column; align-items: flex-end; gap: 6px; }
+  body.f-cyber .yp-bar { width: 128px; }
+  body.f-cyber #nTime { font-size: 236px; font-weight: 600; letter-spacing: -0.03em; }
   body.f-cyber .big .n { font-size: 60px; letter-spacing: 0; }
   body.f-cyber #tmTime { font-size: 42px; letter-spacing: 0; }
   body.f-cyber .fbig .fr { font-size: 30px; letter-spacing: 0; }
