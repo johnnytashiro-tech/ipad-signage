@@ -44,7 +44,7 @@
   #stage { position: absolute; left: 0; top: 0; width: 1024px; height: 1366px; transform-origin: 0 0; background: var(--bg); }
 
   /* ---------- 昼の画面 ---------- */
-  #day { position: absolute; inset: 0; padding: 16px 32px 48px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 320px 300px 430px 192px; gap: 20px; }
+  #day { position: absolute; inset: 0; padding: 32px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 320px 300px 430px 192px; gap: 20px; }
   .tile { background: var(--tile); border-radius: var(--r); min-width: 0; }
   .head { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; font-weight: 700; }
   .head .sub { color: var(--sub); font-weight: 500; }
@@ -193,7 +193,7 @@
   .tline .v { font-size: 19px; font-weight: 700; }
 
   /* ---------- 夜の画面 ---------- */
-  #night { position: absolute; inset: 0; padding: 16px 32px 48px; background: var(--n-bg); color: var(--n-ink); display: flex; flex-direction: column; gap: 20px; }
+  #night { position: absolute; inset: 0; padding: 32px; background: var(--n-bg); color: var(--n-ink); display: flex; flex-direction: column; gap: 20px; }
   .n-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
   #nTime { font-size: 280px; font-weight: 500; line-height: 0.82; letter-spacing: -0.055em; }
   #nDate { font-size: 34px; font-weight: 500; color: var(--n-sub); }
