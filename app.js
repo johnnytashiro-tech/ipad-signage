@@ -334,7 +334,7 @@ async function fetchWeather() {
   const pl = currentPlace();
   const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + pl.lat.toFixed(2) + '&longitude=' + pl.lon.toFixed(2) +
     '&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,precipitation_probability,weather_code' +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=3';
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=7';
   if (conf.demo) { state.weather = demoWeather(); render(); return; }
   try {
     const res = await fetch(url, { cache: 'no-store' });
@@ -565,14 +565,21 @@ function renderWeather(t) {
     '<span class="wx-temp num">' + (temp != null ? Math.round(temp) : '–') + '°</span>' +
     '<div class="wx-side"><span class="c">' + info.label + '</span><span class="r">' + hi + '° / ' + lo + '°</span>' +
     '<span class="r' + (ro.rain ? ' rain' : '') + '">' + ro.text + '</span></div></div>';
-  let first = Math.floor(t.getHours() / 3) * 3 + 3;
-  html += '<div class="hours num">';
-  for (let k = 0; k < 5; k++) {
-    const d = new Date(t.getFullYear(), t.getMonth(), t.getDate(), first + k * 3);
-    const h = hourlyAt(w, d);
-    const pop = h && h.pop != null ? h.pop : null;
-    html += '<div><span class="h jp">' + d.getHours() + '時</span><span class="t">' + (h && h.temp != null ? rnd(h.temp) + '°' : '–') + '</span>' +
-      '<span class="p' + (pop >= 40 ? ' rain' : '') + '">' + (pop == null ? '–' : pop + '%') + '</span></div>';
+  // 線の下：明日から5日分（天気マーク・最高/最低・降水確率）
+  html += '<div class="days5 num">';
+  for (let k = 1; k <= 5; k++) {
+    const d = addDays(t, k);
+    const i = w.daily.time.indexOf(ymd(d));
+    const cls = state.holidays.has(ymd(d)) || d.getDay() === 0 ? ' sun' : d.getDay() === 6 ? ' sat' : '';
+    const label = k === 1 ? '明日' : WD[d.getDay()];
+    if (i < 0) { html += '<div><span class="h jp' + cls + '">' + label + '</span><span class="ic">' + icon('cloud', 30, 1.6) + '</span><span class="t">–</span><span class="p">–</span></div>'; continue; }
+    const info = wx(w.daily.weather_code[i], 1);
+    const mx = w.daily.temperature_2m_max[i], mn = w.daily.temperature_2m_min[i];
+    const pop = w.daily.precipitation_probability_max[i];
+    html += '<div><span class="h jp' + cls + '">' + label + '</span>' +
+      '<span class="ic" title="' + info.label + '">' + icon(info.icon, 30, 1.6) + '</span>' +
+      '<span class="t">' + (mx == null ? '–' : rnd(mx) + '°') + '<span class="lo">' + (mn == null ? '' : rnd(mn) + '°') + '</span></span>' +
+      '<span class="p' + (pop >= 50 ? ' rain' : '') + '">' + icon('umbrella', 12, 2) + (pop == null ? '–' : pop + '%') + '</span></div>';
   }
   $('weather').innerHTML = html + '</div>';
 }
@@ -900,7 +907,8 @@ function demoWeather() {
   }
   return { current: { temperature_2m: 18, weather_code: 1, is_day: 1 },
     hourly: { time: time, temperature_2m: temp, precipitation_probability: pop, weather_code: code },
-    daily: { time: [0, 1, 2].map((k) => ymd(addDays(t, k))), weather_code: [1, 61, 3], temperature_2m_max: [21, 14, 17], temperature_2m_min: [12, 9, 10], precipitation_probability_max: [40, 60, 20] } };
+    daily: { time: [0, 1, 2, 3, 4, 5, 6].map((k) => ymd(addDays(t, k))), weather_code: [1, 61, 3, 2, 0, 80, 3],
+      temperature_2m_max: [21, 14, 17, 19, 22, 16, 18], temperature_2m_min: [12, 9, 10, 11, 13, 10, 9], precipitation_probability_max: [40, 60, 20, 10, 0, 70, 30] } };
 }
 
 /* =====================================================================
