@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Signage">
+<meta name="theme-color" content="#0A1310">
+<meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://script.google.com https://script.googleusercontent.com https://api.open-meteo.com; img-src 'self' data:; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Desk Signage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --f-num: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --f-clock: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --f-jp: 'Zen Kaku Gothic New', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --r: 30px;
+    --top: 0px;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+  body {
+    color: var(--ink);
+    font-family: var(--f-num);
+    font-variant-numeric: tabular-nums;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  .jp { font-family: var(--f-jp); }
+  .num { font-family: var(--f-num); }
+  #time, #nTime, .big .n, #tmTime, .fbig .fr, .wx-temp, .n-tile .v { font-family: var(--f-clock); }
+
+  #stage { position: absolute; left: 0; top: 0; width: 1024px; height: 1366px; transform-origin: 0 0; background: var(--bg); }
+
+  /* ---------- 昼の画面 ---------- */
+  #day { position: absolute; inset: 0; padding: 16px 32px 48px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 320px 300px 430px 192px; gap: 20px; }
+  .tile { background: var(--tile); border-radius: var(--r); min-width: 0; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; font-weight: 700; }
+  .head .sub { color: var(--sub); font-weight: 500; }
+  .muted { color: var(--sub); }
+  .ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+
+  /* 時計 */
+  #clock { grid-column: span 2; background: var(--hero); color: var(--hero-ink); border-radius: var(--r); padding: 32px 40px 36px; display: flex; flex-direction: column; justify-content: space-between; }
+  .clock-head { display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 500; color: var(--hero-sub); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display: block; flex: none; }
+  .dot.warn { background: var(--sun); }
+  .head-right { display: flex; align-items: center; gap: 12px; }
+  .pill { font-size: 15px; font-weight: 600; letter-spacing: 0.08em; color: var(--hero); background: var(--hero-ink); border-radius: 999px; padding: 6px 14px; }
+  #wakeBtn { border: 1.5px solid var(--hero-sub); background: transparent; color: var(--hero-ink); border-radius: 999px; height: 44px; padding: 0 16px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .clock-body { display: flex; justify-content: space-between; align-items: flex-end; }
+  #time { font-size: 232px; font-weight: 500; line-height: 0.82; letter-spacing: -0.055em; }
+  .date { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; padding-bottom: 6px; }
+  #dateMain { font-size: 50px; font-weight: 700; line-height: 1; }
+  #dateSub { font-size: 28px; font-weight: 500; color: var(--hero-sub); }
+  .yp { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 15px; color: var(--hero-sub); }
+  .yp-bar { width: 110px; height: 6px; border-radius: 3px; background: var(--hero-track); display: block; position: relative; overflow: hidden; }
+  #ypFill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); display: block; }
+
+  /* 次の予定 */
+  #next { background: var(--accent); color: var(--on-accent); border-radius: var(--r); padding: 28px 30px; display: flex; flex-direction: column; min-width: 0; }
+  #next .head { align-items: baseline; line-height: 1.4; }
+  #next .after { font-size: 15px; font-weight: 500; color: var(--on-accent-sub); max-width: 60%; }
+  .big { display: flex; align-items: baseline; gap: 6px; margin-top: 16px; font-weight: 700; flex-wrap: nowrap; }
+  .big .u { font-size: 20px; }
+  .big .n { font-size: 78px; line-height: 1; letter-spacing: -0.03em; }
+  .big .w { font-size: 40px; line-height: 1.2; }
+  #next .title { font-size: 28px; font-weight: 700; line-height: 1.35; margin-top: 14px; }
+  .nfoot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; min-width: 0; }
+  .nmeta { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: var(--on-accent-sub); line-height: 1.35; }
+  .nmeta .m1 { font-size: 18px; font-weight: 500; }
+  .nmeta .m2 { font-size: 15px; }
+  .meet { flex: none; display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border: 0; border-radius: 26px; background: var(--on-accent); color: var(--btn-ink); font-size: 17px; font-weight: 700; text-decoration: none; cursor: pointer; font-family: var(--f-jp); }
+  .joins { display: flex; gap: 10px; flex: none; }
+  .meet.compact { padding: 0 16px; gap: 8px; }
+  .meet[disabled] { cursor: default; }
+
+  /* 天気 */
+  #weather { padding: 26px 30px; display: flex; flex-direction: column; justify-content: space-between; }
+  .wx-main { display: flex; align-items: center; gap: 16px; }
+  .wx-temp { font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+  .wx-side { display: flex; flex-direction: column; gap: 3px; margin-left: auto; align-items: flex-end; text-align: right; }
+  .wx-side .c { font-size: 20px; font-weight: 700; }
+  .wx-side .r { font-size: 16px; color: var(--sub); }
+  .rain { color: var(--rain) !important; font-weight: 700; }
+  .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding-top: 14px; border-top: 1px solid var(--line); text-align: center; }
+  .hours > div { display: flex; flex-direction: column; gap: 4px; }
+  .hours .h { font-size: 13px; color: var(--sub); }
+  .hours .t { font-size: 19px; font-weight: 600; }
+  .hours .p { font-size: 12px; color: var(--sub); }
+
+  /* 今日の予定 */
+  #today { padding: 26px 28px; display: flex; flex-direction: column; }
+  #today .head { padding-bottom: 10px; }
+  .allday { display: flex; gap: 8px; align-items: center; height: 28px; font-size: 15px; color: var(--sub); }
+  .chip { border-radius: 8px; padding: 2px 8px; background: var(--track); color: var(--ink); font-size: 14px; }
+  .row { display: grid; grid-template-columns: 70px 16px minmax(0, 1fr) auto; align-items: center; height: 50px; column-gap: 0; }
+  .row .t { font-size: 19px; font-weight: 600; }
+  .row .ti { font-size: 20px; }
+  .row .m { font-size: 15px; color: var(--sub); padding-left: 10px; }
+  .row.past { color: var(--faint); }
+  .row.past .m { color: var(--faint); }
+  .row.hot .t, .row.hot .ti { font-weight: 700; }
+  .bar { width: 4px; height: 26px; border-radius: 2px; display: block; background: var(--work); }
+  .bar.personal { background: var(--personal); }
+  .bar.focus { background: repeating-linear-gradient(180deg, var(--work) 0 4px, transparent 4px 7px); }
+  .bar.ooo { background: var(--sub); }
+  .row.past .bar { background: var(--dot-idle); }
+  .row.hot .bar { background: var(--ink); }
+  .nowline { display: flex; align-items: center; gap: 8px; height: 18px; }
+  .nowline i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); display: block; }
+  .nowline b { flex: 1; height: 2px; background: var(--ink); display: block; }
+  .nowline span { font-size: 12px; font-weight: 700; }
+  .more { font-size: 15px; color: var(--sub); padding-top: 2px; padding-left: 86px; }
+  .empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--sub); }
+
+  /* 右列 */
+  #rightcol { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  #free { height: 270px; padding: 24px 28px; display: flex; flex-direction: column; }
+  #free .head { line-height: 1.4; }
+  .flabel { margin-top: 12px; font-size: 14px; color: var(--sub); line-height: 1.35; }
+  .fbig { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; min-height: 46px; }
+  .fbig .fr { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; white-space: nowrap; }
+  .fbig .fr.none { font-size: 26px; font-family: var(--f-jp); }
+  .fbig .fd { flex: none; font-size: 18px; font-weight: 700; color: var(--on-accent); background: var(--accent); border-radius: 999px; padding: 5px 14px; }
+  .flist-head { display: flex; justify-content: space-between; margin-top: 12px; font-size: 14px; color: var(--sub); line-height: 1.35; }
+  .flist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+  .fchip { display: flex; justify-content: space-between; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 12px; background: var(--track); font-size: 17px; font-weight: 600; white-space: nowrap; }
+  .fchip .d { font-size: 14px; color: var(--sub); font-weight: 500; font-family: var(--f-jp); }
+  .fchip.short { color: var(--sub); font-weight: 500; }
+  .fchip.more { justify-content: center; color: var(--sub); font-size: 15px; font-weight: 500; }
+  .flist-empty { margin-top: 8px; font-size: 16px; color: var(--sub); }
+
+  #timer { flex: 1; min-height: 0; background: var(--hero); color: var(--hero-ink); border-radius: var(--r); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .tm-left { display: flex; flex-direction: column; gap: 4px; }
+  .tm-label { font-size: 16px; font-weight: 700; color: var(--hero-sub); line-height: 1.3; }
+  #tmTime { font-size: 52px; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+  .tm-dots { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--hero-sub); line-height: 1.3; }
+  .tm-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--hero-sub); display: block; }
+  .tm-dots i.on { background: var(--accent); border-color: var(--accent); }
+  .tm-btns { display: flex; align-items: center; gap: 12px; }
+  .round { border: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  #tmPlay { width: 68px; height: 68px; background: var(--accent); color: var(--on-accent); }
+  #tmReset { width: 48px; height: 48px; background: transparent; color: var(--hero-ink); border: 1.5px solid var(--hero-sub); }
+
+  /* 下段 */
+  #bottom { grid-column: span 2; min-width: 0; }
+  .bottom-tile { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; height: 192px; }
+  .bottom-line { display: flex; flex-direction: column; gap: 12px; height: 192px; }
+  #tomorrow { padding: 22px 28px; display: flex; flex-direction: column; }
+  #tomorrow .head { align-items: center; padding-bottom: 8px; }
+  .tw { display: flex; align-items: center; gap: 6px; color: var(--sub); font-weight: 700; }
+  .row.sm { height: 38px; }
+  .row.sm .t { font-size: 18px; }
+  .row.sm .ti { font-size: 19px; }
+  .row.sm .bar { height: 22px; }
+  .week { padding: 22px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .week.wide { flex: 1; min-height: 0; padding: 18px 26px; }
+  .week .head { padding: 0 6px; }
+  .days { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }
+  .week.wide .days { gap: 8px; }
+  .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 16px; }
+  .day .w { font-size: 13px; color: var(--sub); }
+  .day .d { font-size: 24px; font-weight: 600; line-height: 1.15; }
+  .day .ds { display: flex; gap: 3px; height: 6px; align-items: center; }
+  .day .ds i { width: 6px; height: 6px; border-radius: 50%; background: var(--work); display: block; }
+  .day .ds em { font-style: normal; font-size: 10px; line-height: 6px; font-weight: 700; color: var(--work); }
+  .day.past { color: var(--faint); }
+  .day.past .w { color: var(--faint); }
+  .day.past .ds i { background: var(--dot-idle); }
+  .day.past .ds em { color: var(--dot-idle); }
+  .day.sat .w, .day.sat .d { color: var(--sat); }
+  .day.sun .w, .day.sun .d { color: var(--sun); }
+  .day.today { background: var(--today-bg); color: var(--today-ink); }
+  .day.today .w, .day.today .d { color: var(--today-ink); font-weight: 700; }
+  .day.today .ds i { background: var(--today-dot); }
+  .day.today .ds em { color: var(--today-dot); }
+  .tline { height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; gap: 16px; }
+  .tline .l { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+  .tline .k { font-size: 14px; font-weight: 700; letter-spacing: 0.18em; }
+  .tline .v { font-size: 19px; font-weight: 700; }
+
+  /* ---------- 夜の画面 ---------- */
+  #night { position: absolute; inset: 0; padding: 16px 32px 48px; background: var(--n-bg); color: var(--n-ink); display: flex; flex-direction: column; gap: 20px; }
+  .n-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  #nTime { font-size: 280px; font-weight: 500; line-height: 0.82; letter-spacing: -0.055em; }
+  #nDate { font-size: 34px; font-weight: 500; color: var(--n-sub); }
+  .n-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .n-tile { background: var(--n-tile); border-radius: var(--r); padding: 26px 30px; display: flex; flex-direction: column; gap: 8px; min-height: 220px; min-width: 0; }
+  .n-tile > * { flex: none; }
+  .n-tile .l { font-size: 16px; font-weight: 700; color: var(--n-sub); }
+  .n-tile .v { font-size: 56px; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
+  .n-tile .s { font-size: 24px; font-weight: 700; }
+  .n-tile .x { font-size: 16px; color: var(--n-sub); }
+  .n-foot { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 0; font-size: 16px; color: var(--n-sub); }
+  .n-foot .st { display: flex; align-items: center; gap: 10px; }
+  .n-foot .st i { width: 8px; height: 8px; border-radius: 50%; background: var(--n-ink); display: block; }
+
+  /* ---------- 設定 ---------- */
+  #setup { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 48px; z-index: 5; }
+  .setup-card { width: 100%; max-width: 760px; background: var(--tile); border-radius: var(--r); padding: 40px 44px; display: flex; flex-direction: column; gap: 22px; }
+  .setup-card h1 { margin: 0; font-size: 34px; }
+  .setup-card p { margin: 0; font-size: 18px; color: var(--sub); line-height: 1.6; }
+  .field { display: flex; flex-direction: column; gap: 8px; font-size: 17px; font-weight: 700; }
+  .field input, .field select { font: inherit; font-weight: 500; font-size: 18px; height: 56px; border-radius: 14px; border: 1.5px solid var(--sub); background: var(--bg); color: var(--ink); padding: 0 16px; -webkit-user-select: text; user-select: text; }
+  .setup-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .setup-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { height: 56px; padding: 0 26px; border-radius: 28px; border: 0; font-size: 18px; font-weight: 700; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--sub); }
+  #setupMsg { min-height: 24px; font-size: 16px; color: var(--sub); }
+
+  /* ---------- フォントの種類 ---------- */
+  body.f-round { --r: 38px; }
+  body.f-round #time, body.f-round #nTime { font-weight: 800; letter-spacing: -0.02em; }
+  body.f-round .big .n, body.f-round .fbig .fr, body.f-round #tmTime, body.f-round .wx-temp, body.f-round .n-tile .v { font-weight: 800; }
+  body.f-round .fchip, body.f-round .chip { border-radius: 999px; }
+  body.f-round .day { border-radius: 22px; }
+  body.f-cyber { --r: 14px; }
+  body.f-cyber #time { font-size: 176px; font-weight: 600; letter-spacing: 0.01em; line-height: 0.9; }
+  body.f-cyber #nTime { font-size: 206px; font-weight: 600; letter-spacing: 0.01em; }
+  body.f-cyber .big .n { font-size: 60px; letter-spacing: 0; }
+  body.f-cyber #tmTime { font-size: 42px; letter-spacing: 0; }
+  body.f-cyber .fbig .fr { font-size: 30px; letter-spacing: 0; }
+  body.f-cyber .wx-temp { font-size: 58px; letter-spacing: 0; }
+  body.f-cyber .n-tile .v { font-size: 44px; letter-spacing: 0; }
+  body.f-cyber .pill, body.f-cyber .tline .k, body.f-cyber .nowline span { font-family: var(--f-clock); letter-spacing: 0.14em; }
+  body.f-cyber .fchip { font-size: 16px; }
+
+  /* ---------- Tron テーマ（ネオンの線とグリッド） ---------- */
+  body.t-tron #stage { background-image: linear-gradient(rgba(0,229,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.06) 1px, transparent 1px); background-size: 48px 48px; background-position: -1px -1px; }
+  body.t-tron .tile, body.t-tron #clock, body.t-tron #timer { border: 1px solid rgba(0,229,255,0.42); box-shadow: 0 0 18px rgba(0,229,255,0.10), inset 0 0 26px rgba(0,229,255,0.05); }
+  body.t-tron #next { background: rgba(0,229,255,0.06); color: var(--ink); border: 1.5px solid var(--accent); box-shadow: 0 0 26px rgba(0,229,255,0.30), inset 0 0 32px rgba(0,229,255,0.08); }
+  body.t-tron #next .after, body.t-tron .nmeta { color: var(--sub); }
+  body.t-tron #next .big .n { color: var(--accent); text-shadow: 0 0 18px rgba(0,229,255,0.65); }
+  body.t-tron #time { text-shadow: 0 0 24px rgba(0,229,255,0.55); }
+  body.t-tron #nTime { text-shadow: 0 0 24px rgba(0,229,255,0.35); }
+  body.t-tron .meet { background: rgba(0,229,255,0.08); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: 0 0 14px rgba(0,229,255,0.30); }
+  body.t-tron .fbig .fd { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  body.t-tron .fbig .fr { text-shadow: 0 0 14px rgba(0,229,255,0.35); }
+  body.t-tron #tmPlay { background: transparent; color: var(--accent); border: 2px solid var(--accent); box-shadow: 0 0 18px rgba(0,229,255,0.45); }
+  body.t-tron .pill { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  body.t-tron .dot, body.t-tron #ypFill { box-shadow: 0 0 8px var(--accent); }
+  body.t-tron .day.today { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent), 0 0 16px rgba(0,229,255,0.35); }
+  body.t-tron .day.today .w, body.t-tron .day.today .d { color: var(--accent); }
+  body.t-tron .day.today .ds i { background: var(--accent); }
+  body.t-tron .day.today .ds em { color: var(--accent); }
+  body.t-tron .fchip { background: transparent; border: 1px solid rgba(0,229,255,0.28); }
+  body.t-tron .nowline b, body.t-tron .nowline i { background: var(--personal); box-shadow: 0 0 8px var(--personal); }
+  body.t-tron .nowline span { color: var(--personal); }
+  body.t-tron .n-tile { border: 1px solid rgba(0,229,255,0.25); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <main id="day" aria-label="デスクサイネージ">
+    <section id="clock" aria-label="時計">
+      <div class="clock-head">
+        <div class="status"><span class="dot" id="syncDot"></span><span id="syncText"></span></div>
+        <div class="head-right">
+          <button type="button" id="wakeBtn" hidden>タップで常時表示</button>
+          <span class="pill num" id="weekNo"></span>
+        </div>
+      </div>
+      <div class="clock-body">
+        <div class="num" id="time">--:--</div>
+        <div class="date jp">
+          <span id="dateMain"></span>
+          <span id="dateSub"></span>
+          <div class="yp"><span id="ypText"></span><span class="yp-bar"><span id="ypFill"></span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="next" class="jp" aria-label="次の予定"></section>
+    <section id="weather" class="tile jp" aria-label="天気"></section>
+    <section id="today" class="tile jp" aria-label="今日の予定"></section>
+
+    <div id="rightcol">
+      <section id="free" class="tile jp" aria-label="空き時間"></section>
+      <section id="timer" class="jp" aria-label="集中タイマー">
+        <div class="tm-left">
+          <span class="tm-label" id="tmLabel">集中タイマー</span>
+          <span class="num" id="tmTime">25:00</span>
+          <div class="tm-dots" id="tmDots"></div>
+        </div>
+        <div class="tm-btns">
+          <button type="button" class="round" id="tmReset" aria-label="タイマーをリセット" hidden></button>
+          <button type="button" class="round" id="tmPlay" aria-label="集中タイマーを開始"></button>
+        </div>
+      </section>
+    </div>
+
+    <div id="bottom"></div>
+  </main>
+
+  <section id="night" class="jp" hidden aria-label="夜間表示">
+    <div class="n-center">
+      <div class="num" id="nTime">--:--</div>
+      <div id="nDate"></div>
+    </div>
+    <div class="n-tiles">
+      <div class="n-tile" id="nA"></div>
+      <div class="n-tile" id="nB"></div>
+    </div>
+    <div class="n-foot"><div class="st"><i></i><span id="nStatus"></span></div><span>タップで通常表示</span></div>
+  </section>
+
+  <section id="setup" class="jp" hidden aria-label="設定">
+    <form class="setup-card" id="setupForm">
+      <h1>サイネージの設定</h1>
+      <p>Apps Script の「接続URL」（末尾に ?key= が付いたもの）を貼り付けてください。設定はこの iPad の中にだけ保存されます。</p>
+      <label class="field">接続URL
+        <input id="fUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?key=…">
+      </label>
+      <div class="setup-row">
+        <label class="field">テーマ
+          <select id="fTheme">
+            <option value="forest">Forest</option>
+            <option value="lime">Lime</option>
+            <option value="sand">Sand</option>
+            <option value="ocean">Ocean</option>
+            <option value="mono">Mono</option>
+            <option value="midnight">Midnight</option>
+            <option value="tron">Tron（サイバー）</option>
+          </select>
+        </label>
+        <label class="field">明日の予定の出し方
+          <select id="fTomorrow">
+            <option value="tile">タイルで表示</option>
+            <option value="line">1行で表示</option>
+          </select>
+        </label>
+      </div>
+      <label class="field">天気と地名
+        <select id="fPlace">
+          <option value="auto">現在地（iPad の位置情報を使う）</option>
+          <option value="fukuoka">福岡</option>
+          <option value="tokyo">東京</option>
+        </select>
+      </label>
+      <label class="field">フォント
+        <select id="fFont">
+          <option value="standard">標準</option>
+          <option value="round">まる（やわらかい）</option>
+          <option value="cyber">サイバー</option>
+        </select>
+      </label>
+      <label class="field">「Meet / Teams に参加」で開く場所
+        <select id="fMeet">
+          <option value="mac">Mac の Chrome（Mac 側の受け取りスクリプトが必要）</option>
+          <option value="ipad">この iPad</option>
+        </select>
+      </label>
+      <div id="setupMsg" role="status"></div>
+      <div class="setup-actions">
+        <button type="submit" class="btn primary">保存して開始</button>
+        <button type="button" class="btn ghost" id="btnDemo">デモデータで表示</button>
+        <button type="button" class="btn ghost" id="btnClose">閉じる</button>
+      </div>
+      <p style="font-size: 15px">時計を長押しすると、いつでもこの画面を開けます。</p>
+    </form>
+  </section>
+
+</div>
+
+<script src="app.js?v=4"></script>
+</body>
+</html>
