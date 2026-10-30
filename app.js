@@ -131,6 +131,7 @@ const ICON = {
   video: '<rect x="3" y="6" width="12.5" height="12" rx="2.5"/><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/>',
   reset: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5V9h4.5"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
   teams: '<rect x="2.5" y="6" width="12" height="12" rx="2.5"/><path d="M5.5 9.5h6M8.5 9.5v6"/><circle cx="18.2" cy="7.6" r="2"/><path d="M16 12h5v3a2.5 2.5 0 0 1-5 0z"/>',
 };
 const icon = (name, size, sw) => '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 1.7) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[name] + '</svg>';
@@ -385,7 +386,7 @@ function render() {
   $('day').hidden = night;
   $('night').hidden = !night;
   document.documentElement.style.background = night ? 'var(--n-bg)' : 'var(--bg)';
-  if (night) renderNight(t); else renderDay(t);
+  if (night) { if (pop.day) closePop(); renderNight(t); } else renderDay(t);
 }
 
 function renderDay(t) {
@@ -500,6 +501,11 @@ async function openOnMac(url) {
   }
 }
 
+/* 右上の「その後」：時刻の行と、予定名の行に分けて出す */
+function afterHtml(ev) {
+  if (!ev) return '';
+  return '<span class="after"><span class="at num">その後 ' + hm(ev.s) + '</span><span class="ati ellipsis">' + esc(ev.title) + '</span></span>';
+}
 function renderNext(t) {
   const today = timedOn(t);
   const current = today.filter((ev) => ev.s <= t && ev.e > t && ev.busy).sort((a, b) => b.s - a.s)[0];
@@ -507,12 +513,12 @@ function renderNext(t) {
   let html;
   if (current) {
     const after = upcoming[0];
-    html = '<div class="head"><span>進行中</span>' + (after ? '<span class="after ellipsis">その後 ' + hm(after.s) + ' ' + esc(after.title) + '</span>' : '') + '</div>' +
+    html = '<div class="head"><span>進行中</span>' + afterHtml(after) + '</div>' +
       '<div class="big">' + untilParts(mins(t, current.e)).replace('あと', '残り') + '</div>' +
       '<div class="title ellipsis">' + esc(current.title) + '</div>' + nextFoot(current, true);
   } else if (upcoming.length) {
     const ev = upcoming[0], after = upcoming[1];
-    html = '<div class="head"><span>次の予定</span>' + (after ? '<span class="after ellipsis">その後 ' + hm(after.s) + ' ' + esc(after.title) + '</span>' : '') + '</div>' +
+    html = '<div class="head"><span>次の予定</span>' + afterHtml(after) + '</div>' +
       '<div class="big">' + untilParts(mins(t, ev.s)) + '</div>' +
       '<div class="title ellipsis">' + esc(ev.title) + '</div>' + nextFoot(ev, true);
   } else {
@@ -731,11 +737,63 @@ function renderBottom(t) {
     else {
       const show = evs.length > 3 ? evs.slice(0, 2) : evs;
       show.forEach((ev) => { html += rowHtml(ev, '', true, null); });
-      if (evs.length > 3) html += '<div class="more" style="padding-top:2px">ほか ' + (evs.length - 2) + '件</div>';
+      if (evs.length > 3) html += '<div class="more" style="padding-top:2px">ほか ' + (evs.length - 2) + '件<span class="tap"> · タップで一覧</span></div>';
     }
     html += '</div>' + weekHtml(t, false) + '</div>';
   }
   $('bottom').innerHTML = html;
+}
+
+/* 明日の予定の一覧：明日のタイル（1行表示のときはその行）をタップで開く */
+const pop = { day: null, timer: null };
+const POP_MS = 90 * 1000; // 触らなければ自動で閉じる
+function popRowHtml(ev, d) {
+  const kind = ev.kind === 'focus' ? 'focus' : ev.kind === 'ooo' ? 'ooo' : ev.cal === 'personal' ? 'personal' : 'work';
+  const a = day0(d), b = addDays(d, 1);
+  const st = ev.s < a ? '前日〜' : hm(ev.s);
+  const en = ev.e > b ? '翌日まで' : hm(ev.e);
+  const sub = [durShort(mins(ev.s, ev.e))];
+  if (ev.attendees > 1) sub.push('参加者 ' + ev.attendees + '名');
+  if (ev.location) sub.push(ev.location);
+  if (ev.cal === 'personal') sub.push('個人');
+  const badges = joinLinks(ev).map((l) => '<span class="pbadge">' + icon(l.icon, 15, 1.9) + l.name + '</span>').join('');
+  return '<div class="prow"><div class="pt num"><b>' + st + '</b><span>' + en + '</span></div><span class="bar ' + kind + '"></span>' +
+    '<div class="pm"><span class="pti">' + esc(ev.title) + '</span><span class="psub">' + esc(sub.join(' · ')) + '</span></div>' +
+    (badges ? '<div class="pbadges">' + badges + '</div>' : '') + '</div>';
+}
+function renderPop() {
+  const d = pop.day;
+  if (!d) return;
+  const evs = eventsOn(d);
+  const allDay = evs.filter((ev) => ev.allDay);
+  const timed = evs.filter((ev) => !ev.allDay).sort((x, y) => x.s - y.s || x.e - y.e);
+  const hol = state.holidays.get(ymd(d));
+  const meets = timed.filter(isMeeting);
+  const meetMin = meets.reduce((sm, ev) => sm + mins(ev.s, ev.e), 0);
+  const tw = tomorrowWeather(addDays(d, -1));
+  let html = '<div class="pop-head"><div class="pop-tt"><span class="pop-k">明日の予定</span><span class="pop-d">' +
+    esc((d.getMonth() + 1) + '月' + d.getDate() + '日（' + WD[d.getDay()] + '）' + (hol ? ' · ' + hol : '')) + '</span></div>' +
+    '<button type="button" class="pop-x" data-close aria-label="閉じる">' + icon('close', 24, 2.2) + '</button></div>';
+  html += '<div class="pop-sum num"><span>' + evs.length + '件</span>' + (meets.length ? '<span>会議 ' + durShort(meetMin) + ' · ' + meets.length + '件</span>' : '') +
+    (timed.length ? '<span>' + hm(timed[0].s < day0(d) ? day0(d) : timed[0].s) + ' 〜 ' + hm(timed[timed.length - 1].e > addDays(d, 1) ? addDays(d, 1) : timed[timed.length - 1].e) + '</span>' : '') +
+    (tw ? '<span class="tw' + (tw.rain ? ' rain' : '') + '">' + icon(tw.rain ? 'umbrella' : tw.icon, 20, 1.8) + (tw.rain ? '雨 ' + tw.pop + '%' : tw.label) + ' · ' + tw.hi + '°/' + tw.lo + '°</span>' : '') + '</div>';
+  if (allDay.length) html += '<div class="pop-allday"><span>終日</span>' + allDay.map((ev) => '<span class="chip">' + esc(ev.title) + '</span>').join('') + '</div>';
+  if (!timed.length) html += '<div class="pop-empty">' + (allDay.length ? '時間指定の予定はありません' : '予定はありません') + '</div>';
+  else html += '<div class="pop-list">' + timed.map((ev) => popRowHtml(ev, d)).join('') + '</div>';
+  html += '<div class="pop-foot">外側をタップすると閉じます</div>';
+  $('popCard').innerHTML = html;
+}
+function armPopTimer() { clearTimeout(pop.timer); pop.timer = setTimeout(closePop, POP_MS); }
+function openPop(d) {
+  pop.day = day0(d);
+  renderPop();
+  $('dayPop').hidden = false;
+  armPopTimer();
+}
+function closePop() {
+  clearTimeout(pop.timer);
+  pop.day = null;
+  $('dayPop').hidden = true;
 }
 
 /* 夜の画面 */
@@ -965,6 +1023,14 @@ $('next').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-meet]');
   if (b) openOnMac(b.getAttribute('data-meet'));
 });
+$('bottom').addEventListener('click', (e) => {
+  if (e.target.closest('#tomorrow, .tline')) openPop(addDays(now(), 1));
+});
+$('dayPop').addEventListener('click', (e) => {
+  if (e.target === $('dayPop') || e.target.closest('[data-close]')) closePop();
+});
+$('dayPop').addEventListener('pointerdown', armPopTimer);
+$('dayPop').addEventListener('scroll', armPopTimer, true);
 window.addEventListener('resize', fit);
 window.addEventListener('orientationchange', fit);
 

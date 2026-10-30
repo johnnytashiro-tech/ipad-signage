@@ -71,8 +71,10 @@
 
   /* 次の予定 */
   #next { background: var(--accent); color: var(--on-accent); border-radius: var(--r); padding: 28px 30px; display: flex; flex-direction: column; min-width: 0; }
-  #next .head { align-items: baseline; line-height: 1.4; }
-  #next .after { font-size: 15px; font-weight: 500; color: var(--on-accent-sub); max-width: 60%; }
+  #next .head { align-items: flex-start; line-height: 1.4; }
+  #next .after { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 0; max-width: 64%; text-align: right; font-size: 15px; font-weight: 500; color: var(--on-accent-sub); line-height: 1.35; }
+  #next .after .ati { max-width: 100%; font-size: 16px; font-weight: 700; }
+  #next .big { margin-top: 10px; }
   .big { display: flex; align-items: baseline; gap: 6px; margin-top: 16px; font-weight: 700; flex-wrap: nowrap; }
   .big .u { font-size: 20px; }
   .big .n { font-size: 78px; line-height: 1; letter-spacing: -0.03em; }
@@ -95,16 +97,16 @@
   .wx-side .c { font-size: 20px; font-weight: 700; }
   .wx-side .r { font-size: 16px; color: var(--sub); }
   .rain { color: var(--rain) !important; font-weight: 700; }
-  .days5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); text-align: center; }
-  .days5 > div { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .days5 .h { font-size: 13px; font-weight: 600; color: var(--sub); }
+  .days5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; }
+  .days5 > div { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .days5 .h { font-size: 14px; font-weight: 600; color: var(--sub); line-height: 1; }
   .days5 .h.sat { color: var(--sat); }
   .days5 .h.sun { color: var(--sun); }
-  .days5 .ic { display: block; height: 30px; margin: 1px 0; }
+  .days5 .ic { display: block; height: 30px; }
   .days5 .ic svg { display: block; }
-  .days5 .t { font-size: 18px; font-weight: 600; white-space: nowrap; }
-  .days5 .t .lo { font-size: 14px; font-weight: 500; color: var(--sub); margin-left: 4px; }
-  .days5 .p { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; color: var(--sub); }
+  .days5 .t { font-size: 18px; font-weight: 600; white-space: nowrap; line-height: 1; }
+  .days5 .t .lo { font-size: 14px; font-weight: 500; color: var(--sub); margin-left: 5px; }
+  .days5 .p { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; color: var(--sub); line-height: 1; }
   .days5 .p svg { flex: none; }
 
   /* 今日の予定 */
@@ -214,6 +216,36 @@
   .n-foot .st { display: flex; align-items: center; gap: 10px; }
   .n-foot .st i { width: 8px; height: 8px; border-radius: 50%; background: var(--n-ink); display: block; }
 
+  /* ---------- 明日の予定の一覧（ポップアップ） ---------- */
+  #tomorrow, .tline { cursor: pointer; transition: opacity 0.15s; }
+  #tomorrow:active, .tline:active { opacity: 0.7; }
+  #tomorrow .more .tap { color: var(--faint); }
+  #dayPop { position: absolute; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; padding: 80px 56px; background: rgba(0, 0, 0, 0.55); }
+  .pop-card { width: 100%; max-width: 840px; max-height: 100%; display: flex; flex-direction: column; background: var(--tile); color: var(--ink); border-radius: var(--r); padding: 30px 34px 20px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); }
+  .pop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .pop-tt { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .pop-k { font-size: 30px; font-weight: 700; line-height: 1.2; }
+  .pop-d { font-size: 18px; color: var(--sub); }
+  .pop-x { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--track); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .pop-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); font-size: 17px; color: var(--sub); }
+  .pop-sum .tw { font-weight: 700; }
+  .pop-allday { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 0 4px; font-size: 15px; color: var(--sub); }
+  .pop-allday .chip { font-size: 16px; padding: 4px 10px; }
+  .pop-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; margin-top: 6px; }
+  .prow { display: grid; grid-template-columns: 78px 18px minmax(0, 1fr) auto; align-items: center; column-gap: 0; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .prow:last-child { border-bottom: 0; }
+  .prow .pt { display: flex; flex-direction: column; gap: 3px; line-height: 1.1; }
+  .prow .pt b { font-size: 21px; font-weight: 700; }
+  .prow .pt span { font-size: 15px; color: var(--sub); }
+  .prow .bar { height: 40px; }
+  .prow .pm { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .prow .pti { font-size: 21px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+  .prow .psub { font-size: 15px; color: var(--sub); line-height: 1.4; overflow-wrap: anywhere; }
+  .prow .pbadges { display: flex; gap: 6px; padding-left: 12px; }
+  .pbadge { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--sub); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; white-space: nowrap; }
+  .pop-empty { padding: 48px 0; text-align: center; font-size: 20px; color: var(--sub); }
+  .pop-foot { padding-top: 12px; text-align: center; font-size: 14px; color: var(--faint); }
+
   /* ---------- 設定 ---------- */
   #setup { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 48px; z-index: 5; }
   .setup-card { width: 100%; max-width: 760px; background: var(--tile); border-radius: var(--r); padding: 40px 44px; display: flex; flex-direction: column; gap: 22px; }
@@ -258,6 +290,7 @@
   body.t-tron #next .after, body.t-tron .nmeta { color: var(--sub); }
   body.t-tron #next .big .n { color: var(--accent); text-shadow: 0 0 18px rgba(0,229,255,0.65); }
   body.t-tron #time { text-shadow: 0 0 24px rgba(0,229,255,0.55); }
+  body.t-tron .pop-card { border: 1px solid rgba(0,229,255,0.55); box-shadow: 0 0 30px rgba(0,229,255,0.22), 0 30px 90px rgba(0,0,0,0.6); }
   body.t-tron #nTime { text-shadow: 0 0 24px rgba(0,229,255,0.35); }
   body.t-tron .meet { background: rgba(0,229,255,0.08); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: 0 0 14px rgba(0,229,255,0.30); }
   body.t-tron .fbig .fd { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
@@ -331,6 +364,10 @@
     <div class="n-foot"><div class="st"><i></i><span id="nStatus"></span></div><span>タップで通常表示</span></div>
   </section>
 
+  <section id="dayPop" hidden>
+    <div class="pop-card jp" id="popCard" role="dialog" aria-modal="true" aria-label="明日の予定"></div>
+  </section>
+
   <section id="setup" class="jp" hidden aria-label="設定">
     <form class="setup-card" id="setupForm">
       <h1>サイネージの設定</h1>
@@ -389,6 +426,6 @@
 
 </div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
