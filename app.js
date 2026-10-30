@@ -547,7 +547,7 @@ function rainOutlook(w, t) {
     const d = new Date(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours() + k);
     const h = hourlyAt(w, d);
     if (!h) continue;
-    if (h.pop >= 50) return { text: k === 0 ? '雨 · 傘を' : (d.getDate() !== t.getDate() ? '夜中' : d.getHours() + '時ごろ') + 'から雨 · 傘', rain: true };
+    if (h.pop >= 50) return { text: k === 0 ? 'いま雨の予報' : (d.getDate() !== t.getDate() ? '夜中' : d.getHours() + '時ごろ') + 'から雨', rain: true };
     max = Math.max(max, h.pop || 0);
   }
   return { text: max < 20 ? '雨の心配なし' : '降水 ' + max + '%', rain: false };
@@ -570,7 +570,7 @@ function renderWeather(t) {
   html += '<div class="wx-main">' + icon(info.icon, 58, 1.6) +
     '<span class="wx-temp num">' + (temp != null ? Math.round(temp) : '–') + '°</span>' +
     '<div class="wx-side"><span class="c">' + info.label + '</span><span class="r">' + hi + '° / ' + lo + '°</span>' +
-    '<span class="r' + (ro.rain ? ' rain' : '') + '">' + ro.text + '</span></div></div>';
+    '<span class="r' + (ro.rain ? ' rain' : '') + '">' + (ro.rain ? icon('umbrella', 16, 2) : '') + ro.text + '</span></div></div>';
   // 線の下：明日から5日分（天気マーク・最高/最低・降水確率）
   html += '<div class="days5 num">';
   for (let k = 1; k <= 5; k++) {
@@ -737,7 +737,7 @@ function renderBottom(t) {
     else {
       const show = evs.length > 3 ? evs.slice(0, 2) : evs;
       show.forEach((ev) => { html += rowHtml(ev, '', true, null); });
-      if (evs.length > 3) html += '<div class="more" style="padding-top:2px">ほか ' + (evs.length - 2) + '件<span class="tap"> · タップで一覧</span></div>';
+      if (evs.length > 3) html += '<div class="more" style="padding-top:2px">ほか ' + (evs.length - 2) + '件</div>';
     }
     html += '</div>' + weekHtml(t, false) + '</div>';
   }
@@ -780,7 +780,6 @@ function renderPop() {
   if (allDay.length) html += '<div class="pop-allday"><span>終日</span>' + allDay.map((ev) => '<span class="chip">' + esc(ev.title) + '</span>').join('') + '</div>';
   if (!timed.length) html += '<div class="pop-empty">' + (allDay.length ? '時間指定の予定はありません' : '予定はありません') + '</div>';
   else html += '<div class="pop-list">' + timed.map((ev) => popRowHtml(ev, d)).join('') + '</div>';
-  html += '<div class="pop-foot">外側をタップすると閉じます</div>';
   $('popCard').innerHTML = html;
 }
 function armPopTimer() { clearTimeout(pop.timer); pop.timer = setTimeout(closePop, POP_MS); }

@@ -95,7 +95,7 @@
   .wx-temp { font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
   .wx-side { display: flex; flex-direction: column; gap: 3px; margin-left: auto; align-items: flex-end; text-align: right; }
   .wx-side .c { font-size: 20px; font-weight: 700; }
-  .wx-side .r { font-size: 16px; color: var(--sub); }
+  .wx-side .r { font-size: 16px; color: var(--sub); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
   .rain { color: var(--rain) !important; font-weight: 700; }
   .days5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; }
   .days5 > div { display: flex; flex-direction: column; align-items: center; gap: 7px; }
@@ -219,9 +219,8 @@
   /* ---------- 明日の予定の一覧（ポップアップ） ---------- */
   #tomorrow, .tline { cursor: pointer; transition: opacity 0.15s; }
   #tomorrow:active, .tline:active { opacity: 0.7; }
-  #tomorrow .more .tap { color: var(--faint); }
   #dayPop { position: absolute; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; padding: 80px 56px; background: rgba(0, 0, 0, 0.55); }
-  .pop-card { width: 100%; max-width: 840px; max-height: 100%; display: flex; flex-direction: column; background: var(--tile); color: var(--ink); border-radius: var(--r); padding: 30px 34px 20px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); }
+  .pop-card { width: 100%; max-width: 840px; max-height: 100%; display: flex; flex-direction: column; background: var(--tile); color: var(--ink); border-radius: var(--r); padding: 30px 34px 24px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); }
   .pop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   .pop-tt { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .pop-k { font-size: 30px; font-weight: 700; line-height: 1.2; }
@@ -244,7 +243,6 @@
   .prow .pbadges { display: flex; gap: 6px; padding-left: 12px; }
   .pbadge { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--sub); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; white-space: nowrap; }
   .pop-empty { padding: 48px 0; text-align: center; font-size: 20px; color: var(--sub); }
-  .pop-foot { padding-top: 12px; text-align: center; font-size: 14px; color: var(--faint); }
 
   /* ---------- 設定 ---------- */
   #setup { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 48px; z-index: 5; }
@@ -426,6 +424,6 @@
 
 </div>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
